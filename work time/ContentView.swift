@@ -44,7 +44,7 @@ struct ContentView: View {
 						currentTimer = .breakTime
 					}
 					startTime = Date.now
-					time = .random(in: 360..<1260)
+					time = 5// .random(in: 360..<1260)
 					timer?.invalidate()
 					timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true, block: { _ in
 						time -= 1
@@ -85,8 +85,12 @@ struct ContentView: View {
 					.frame(width: 1000, height: 1000)
 					.background(Rectangle().foregroundColor(.red))
 					.foregroundColor(.white)
-					.onTapGesture { self.currentTimer = .none }
+					.onTapGesture {
+						self.currentTimer = .none
+						self.audioPlayer.stop()
+					}
 				Button("Keep Working") {
+					self.audioPlayer.stop()
 					currentTimer = .workTime
 					timer?.invalidate()
 					timer = Timer.scheduledTimer(withTimeInterval: 900, repeats: false, block: { _ in
@@ -104,7 +108,10 @@ struct ContentView: View {
 				.frame(width: 1000, height: 1000)
 				.background(Rectangle().foregroundColor(.red))
 				.foregroundColor(.white)
-				.onTapGesture { self.currentTimer = .none }
+				.onTapGesture {
+					self.currentTimer = .none
+					self.audioPlayer.stop()
+				}
 				.offset(y: currentTimer == .breakOver ? 0 : -1000)
 		}
 		.onAppear {
