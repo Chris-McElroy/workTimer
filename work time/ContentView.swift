@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AVKit
 
 enum CurrentTimer {
 	case none, workTime, breakTime, workOver, breakOver
@@ -19,6 +20,7 @@ struct ContentView: View {
 	@State var timer: Timer? = nil
 	@State var time: Int = 0
 	@State var startTime: Double = 0
+	@State var audioPlayer: AVAudioPlayer!
 	
     var body: some View {
 		ZStack {
@@ -32,6 +34,7 @@ struct ContentView: View {
 					timer?.invalidate()
 					timer = Timer.scheduledTimer(withTimeInterval: TimeInterval(time), repeats: false, block: { _ in
 						self.currentTimer = .workOver
+						self.audioPlayer.play()
 					})
 				}
 				.buttonStyle(MainStyle(color: purple))
@@ -48,6 +51,7 @@ struct ContentView: View {
 						if time < 0 {
 							self.currentTimer = .breakOver
 							self.timer?.invalidate()
+							self.audioPlayer.play()
 						}
 					})
 				}
@@ -56,7 +60,7 @@ struct ContentView: View {
 			Text("WORK\nTIME!")
 				.font(.system(size: 80, weight: .bold, design: .rounded))
 				.multilineTextAlignment(.center)
-				.frame(width: 400, height: 1000)
+				.frame(width: 1000, height: 1000)
 				.background(Rectangle().foregroundColor(purple))
 				.foregroundColor(.white)
 				.offset(y: currentTimer == .workTime ? 0 : -1000)
@@ -65,7 +69,7 @@ struct ContentView: View {
 				Text("BREAK\nTIME!")
 					.font(.system(size: 80, weight: .bold, design: .rounded))
 					.multilineTextAlignment(.center)
-					.frame(width: 400, height: 1000)
+					.frame(width: 1000, height: 1000)
 					.background(Rectangle().foregroundColor(green))
 				Text("\(max(time,0)/60):\((max(time,0) % 60)/10)\(max(time,0) % 10)")
 					.font(.system(size: 40, weight: .bold, design: .rounded))
@@ -78,7 +82,7 @@ struct ContentView: View {
 				Text("WORK\nOVER!")
 					.font(.system(size: 80, weight: .bold, design: .rounded))
 					.multilineTextAlignment(.center)
-					.frame(width: 400, height: 1000)
+					.frame(width: 1000, height: 1000)
 					.background(Rectangle().foregroundColor(.red))
 					.foregroundColor(.white)
 					.onTapGesture { self.currentTimer = .none }
@@ -87,6 +91,7 @@ struct ContentView: View {
 					timer?.invalidate()
 					timer = Timer.scheduledTimer(withTimeInterval: 900, repeats: false, block: { _ in
 						self.currentTimer = .workOver
+						self.audioPlayer.play()
 					})
 				}
 				.buttonStyle(MainStyle(color: purple))
@@ -96,11 +101,15 @@ struct ContentView: View {
 			Text("BREAK\nOVER!")
 				.font(.system(size: 80, weight: .bold, design: .rounded))
 				.multilineTextAlignment(.center)
-				.frame(width: 400, height: 1000)
+				.frame(width: 1000, height: 1000)
 				.background(Rectangle().foregroundColor(.red))
 				.foregroundColor(.white)
 				.onTapGesture { self.currentTimer = .none }
 				.offset(y: currentTimer == .breakOver ? 0 : -1000)
+		}
+		.onAppear {
+			let sound = Bundle.main.path(forResource: "Duck-quack", ofType: "mp3")
+			self.audioPlayer = try! AVAudioPlayer(contentsOf: URL(fileURLWithPath: sound!))
 		}
     }
 }
@@ -129,6 +138,7 @@ extension Date {
 		Int(timeIntervalSinceReferenceDate*1000)
 	}
 }
+
 
 
 // Ok so basically what I want is a timer button called “work” that will be a random interval between 25 and 45 minutes
