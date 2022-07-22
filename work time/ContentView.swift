@@ -19,43 +19,83 @@ struct ContentView: View {
 	@State var currentTimer: CurrentTimer = .none
 	@State var timer: Timer? = nil
 	@State var time: Int = 0
-	@State var startTime: Double = 0
+	@State var endTime: Double = 0
 	@State var audioPlayer: AVAudioPlayer!
+	@State var audioSession: AVAudioSession! = AVAudioSession.sharedInstance()
+	@State var taskID: UIBackgroundTaskIdentifier? = nil
 	
     var body: some View {
 		ZStack {
 			VStack(spacing: 0) {
-				Button("Start Work") {
+				Button("Long Work") {
 					withAnimation(.easeIn) {
 						currentTimer = .workTime
 					}
-					startTime = Date.now
+					startBackgroundTask()
 					time = .random(in: 1500..<2700)
 					timer?.invalidate()
 					timer = Timer.scheduledTimer(withTimeInterval: TimeInterval(time), repeats: false, block: { _ in
 						self.currentTimer = .workOver
 						self.audioPlayer.play()
+						endBackgroundTask()
 					})
 				}
 				.buttonStyle(MainStyle(color: purple))
+				Spacer().frame(height: 50)
+				Button("Short Work") {
+					withAnimation(.easeIn) {
+						currentTimer = .workTime
+					}
+					startBackgroundTask()
+					time = .random(in: 600..<1500)
+					timer?.invalidate()
+					timer = Timer.scheduledTimer(withTimeInterval: TimeInterval(time), repeats: false, block: { _ in
+						self.currentTimer = .workOver
+						self.audioPlayer.play()
+						endBackgroundTask()
+					})
+				}
+				.buttonStyle(MainStyle(color: purple.opacity(0.5)))
 				Spacer().frame(height: 100)
-				Button("Start Break") {
+				Button("Long Break") {
 					withAnimation(.easeIn) {
 						currentTimer = .breakTime
 					}
-					startTime = Date.now
-					time = 5// .random(in: 360..<1260)
+					startBackgroundTask()
+					time = .random(in: 360..<1260)
+					endTime = Date.now + Double(time)
 					timer?.invalidate()
 					timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true, block: { _ in
-						time -= 1
+						time = Int(endTime - Date.now)
 						if time < 0 {
 							self.currentTimer = .breakOver
 							self.timer?.invalidate()
 							self.audioPlayer.play()
+							endBackgroundTask()
 						}
 					})
 				}
 				.buttonStyle(MainStyle(color: green))
+				Spacer().frame(height: 50)
+				Button("Short Break") {
+					withAnimation(.easeIn) {
+						currentTimer = .breakTime
+					}
+					startBackgroundTask()
+					time = .random(in: 60..<240)
+					endTime = Date.now + Double(time)
+					timer?.invalidate()
+					timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true, block: { _ in
+						time = Int(endTime - Date.now)
+						if time < 0 {
+							self.currentTimer = .breakOver
+							self.timer?.invalidate()
+							self.audioPlayer.play()
+							endBackgroundTask()
+						}
+					})
+				}
+				.buttonStyle(MainStyle(color: green.opacity(0.5)))
 			}
 			Text("WORK\nTIME!")
 				.font(.system(size: 80, weight: .bold, design: .rounded))
@@ -76,7 +116,12 @@ struct ContentView: View {
 					.offset(y: -200)
 			}
 			.foregroundColor(.white)
-			.onTapGesture { self.currentTimer = .breakOver }
+			.onTapGesture {
+				self.currentTimer = .breakOver
+				self.audioPlayer.play()
+				timer?.invalidate()
+				endBackgroundTask()
+			}
 			.offset(y: currentTimer == .breakTime ? 0 : -1000)
 			ZStack {
 				Text("WORK\nOVER!")
@@ -91,11 +136,13 @@ struct ContentView: View {
 					}
 				Button("Keep Working") {
 					self.audioPlayer.stop()
+					startBackgroundTask()
 					currentTimer = .workTime
 					timer?.invalidate()
 					timer = Timer.scheduledTimer(withTimeInterval: 900, repeats: false, block: { _ in
 						self.currentTimer = .workOver
 						self.audioPlayer.play()
+						endBackgroundTask()
 					})
 				}
 				.buttonStyle(MainStyle(color: purple))
@@ -115,10 +162,27 @@ struct ContentView: View {
 				.offset(y: currentTimer == .breakOver ? 0 : -1000)
 		}
 		.onAppear {
+			_ = try? audioSession.setCategory(.playback)
+			_ = try? audioSession.setActive(true)
 			let sound = Bundle.main.path(forResource: "Duck-quack", ofType: "mp3")
 			self.audioPlayer = try! AVAudioPlayer(contentsOf: URL(fileURLWithPath: sound!))
 		}
     }
+	
+	func startBackgroundTask() {
+		endBackgroundTask()
+		taskID = UIApplication.shared.beginBackgroundTask(expirationHandler: {
+			timer?.invalidate()
+			endBackgroundTask()
+			print("ended")
+		})
+	}
+	
+	func endBackgroundTask() {
+		if let taskID = taskID {
+			UIApplication.shared.endBackgroundTask(taskID)
+		}
+	}
 }
 
 struct MainStyle: ButtonStyle {
