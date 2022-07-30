@@ -20,6 +20,7 @@ struct ContentView: View {
 	@State var timer: Timer? = nil
 	@State var time: Int = 0
 	@State var endTime: Double = 0
+	@State var endableWork: Bool = false
 	@State var audioPlayer: AVAudioPlayer!
 	@State var audioSession: AVAudioSession! = AVAudioSession.sharedInstance()
 	@State var taskID: UIBackgroundTaskIdentifier? = nil
@@ -54,7 +55,14 @@ struct ContentView: View {
 				.background(Rectangle().foregroundColor(purple))
 				.foregroundColor(.white)
 				.offset(y: currentTimer == .workTime ? 0 : -1000)
-//				.onTapGesture { self.currentTimer = .workOver }
+				.onTapGesture {
+					if endableWork {
+						self.currentTimer = .workOver
+						clearNotifications()
+						playSound()
+						timer?.invalidate()
+					}
+				}
 			ZStack {
 				Text("BREAK\nTIME!")
 					.font(.system(size: 80, weight: .bold, design: .rounded))
@@ -68,7 +76,8 @@ struct ContentView: View {
 			.foregroundColor(.white)
 			.onTapGesture {
 				self.currentTimer = .breakOver
-				self.audioPlayer.play()
+				clearNotifications()
+				playSound()
 				timer?.invalidate()
 			}
 			.offset(y: currentTimer == .breakTime ? 0 : -1000)
@@ -81,10 +90,14 @@ struct ContentView: View {
 					.foregroundColor(.white)
 					.onTapGesture {
 						self.currentTimer = .none
-						self.audioPlayer.stop()
+						endSound()
+					}
+					.onAppear {
+						endableWork = false
 					}
 				Button("Keep Working") {
-					self.audioPlayer.stop()
+					endSound()
+					endableWork = true
 					startWorkTimer(in: 800..<1000)
 				}
 				.buttonStyle(MainStyle(color: purple))
@@ -99,18 +112,27 @@ struct ContentView: View {
 				.foregroundColor(.white)
 				.onTapGesture {
 					self.currentTimer = .none
-					self.audioPlayer.stop()
+					endSound()
 				}
 				.offset(y: currentTimer == .breakOver ? 0 : -1000)
 		}
 		.onAppear {
-			_ = try? audioSession.setCategory(.playback)
-			_ = try? audioSession.setActive(true)
+			_ = try? audioSession.setCategory(.ambient, options: [.duckOthers])
 			let sound = Bundle.main.path(forResource: "Duck-quack", ofType: "mp3")
 			self.audioPlayer = try! AVAudioPlayer(contentsOf: URL(fileURLWithPath: sound!))
 			turnOnNotifications()
 		}
     }
+	
+	func playSound() {
+		_ = try? audioSession.setActive(true)
+		self.audioPlayer.play()
+	}
+	
+	func endSound() {
+		self.audioPlayer.stop()
+		_ = try? audioSession.setActive(false)
+	}
 	
 	func startWorkTimer(in timeRange: Range<Int>) {
 		withAnimation(.easeIn) {
@@ -121,7 +143,7 @@ struct ContentView: View {
 		timer?.invalidate()
 		timer = Timer.scheduledTimer(withTimeInterval: TimeInterval(time), repeats: false, block: { _ in
 			self.currentTimer = .workOver
-			self.audioPlayer.play()
+			playSound()
 		})
 	}
 	
@@ -138,7 +160,7 @@ struct ContentView: View {
 			if time < 0 {
 				self.currentTimer = .breakOver
 				self.timer?.invalidate()
-				self.audioPlayer.play()
+				playSound()
 			}
 		})
 	}
@@ -174,9 +196,16 @@ func turnOnNotifications(callBack: @escaping (Bool) -> Void = {_ in }) {
 		if let error = error { print(error.localizedDescription) }
 		callBack(success)
 	}
+	clearNotifications()
+}
+
+func clearNotifications() {
+	UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+	UNUserNotificationCenter.current().removeAllDeliveredNotifications()
 }
 
 func setNotification(for timeInterval: TimeInterval) {
+	clearNotifications()
 	let content = UNMutableNotificationContent()
 	content.sound = UNNotificationSound(named: UNNotificationSoundName(rawValue: "Duck-quack.mp3"))
 	content.title = "quack"
