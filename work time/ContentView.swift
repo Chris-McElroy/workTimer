@@ -28,72 +28,22 @@ struct ContentView: View {
 		ZStack {
 			VStack(spacing: 0) {
 				Button("Long Work") {
-					withAnimation(.easeIn) {
-						currentTimer = .workTime
-					}
-					startBackgroundTask()
-					time = .random(in: 1500..<2700)
-					timer?.invalidate()
-					timer = Timer.scheduledTimer(withTimeInterval: TimeInterval(time), repeats: false, block: { _ in
-						self.currentTimer = .workOver
-						self.audioPlayer.play()
-						endBackgroundTask()
-					})
+					startWorkTimer(in: 1500..<2700)
 				}
 				.buttonStyle(MainStyle(color: purple))
 				Spacer().frame(height: 50)
 				Button("Short Work") {
-					withAnimation(.easeIn) {
-						currentTimer = .workTime
-					}
-					startBackgroundTask()
-					time = .random(in: 600..<1500)
-					timer?.invalidate()
-					timer = Timer.scheduledTimer(withTimeInterval: TimeInterval(time), repeats: false, block: { _ in
-						self.currentTimer = .workOver
-						self.audioPlayer.play()
-						endBackgroundTask()
-					})
+					startWorkTimer(in: 600..<1500)
 				}
 				.buttonStyle(MainStyle(color: purple.opacity(0.5)))
 				Spacer().frame(height: 100)
 				Button("Long Break") {
-					withAnimation(.easeIn) {
-						currentTimer = .breakTime
-					}
-					startBackgroundTask()
-					time = .random(in: 360..<1260)
-					endTime = Date.now + Double(time)
-					timer?.invalidate()
-					timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true, block: { _ in
-						time = Int(endTime - Date.now)
-						if time < 0 {
-							self.currentTimer = .breakOver
-							self.timer?.invalidate()
-							self.audioPlayer.play()
-							endBackgroundTask()
-						}
-					})
+					startBreakTimer(in: 360..<1260)
 				}
 				.buttonStyle(MainStyle(color: green))
 				Spacer().frame(height: 50)
 				Button("Short Break") {
-					withAnimation(.easeIn) {
-						currentTimer = .breakTime
-					}
-					startBackgroundTask()
-					time = .random(in: 60..<240)
-					endTime = Date.now + Double(time)
-					timer?.invalidate()
-					timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true, block: { _ in
-						time = Int(endTime - Date.now)
-						if time < 0 {
-							self.currentTimer = .breakOver
-							self.timer?.invalidate()
-							self.audioPlayer.play()
-							endBackgroundTask()
-						}
-					})
+					startBreakTimer(in: 60..<240)
 				}
 				.buttonStyle(MainStyle(color: green.opacity(0.5)))
 			}
@@ -120,7 +70,6 @@ struct ContentView: View {
 				self.currentTimer = .breakOver
 				self.audioPlayer.play()
 				timer?.invalidate()
-				endBackgroundTask()
 			}
 			.offset(y: currentTimer == .breakTime ? 0 : -1000)
 			ZStack {
@@ -136,14 +85,7 @@ struct ContentView: View {
 					}
 				Button("Keep Working") {
 					self.audioPlayer.stop()
-					startBackgroundTask()
-					currentTimer = .workTime
-					timer?.invalidate()
-					timer = Timer.scheduledTimer(withTimeInterval: 900, repeats: false, block: { _ in
-						self.currentTimer = .workOver
-						self.audioPlayer.play()
-						endBackgroundTask()
-					})
+					startWorkTimer(in: 800..<1000)
 				}
 				.buttonStyle(MainStyle(color: purple))
 				.offset(y: 160)
@@ -166,22 +108,39 @@ struct ContentView: View {
 			_ = try? audioSession.setActive(true)
 			let sound = Bundle.main.path(forResource: "Duck-quack", ofType: "mp3")
 			self.audioPlayer = try! AVAudioPlayer(contentsOf: URL(fileURLWithPath: sound!))
+			turnOnNotifications()
 		}
     }
 	
-	func startBackgroundTask() {
-		endBackgroundTask()
-		taskID = UIApplication.shared.beginBackgroundTask(expirationHandler: {
-			timer?.invalidate()
-			endBackgroundTask()
-			print("ended")
+	func startWorkTimer(in timeRange: Range<Int>) {
+		withAnimation(.easeIn) {
+			currentTimer = .workTime
+		}
+		time = .random(in: timeRange)
+		setNotification(for: TimeInterval(time))
+		timer?.invalidate()
+		timer = Timer.scheduledTimer(withTimeInterval: TimeInterval(time), repeats: false, block: { _ in
+			self.currentTimer = .workOver
+			self.audioPlayer.play()
 		})
 	}
 	
-	func endBackgroundTask() {
-		if let taskID = taskID {
-			UIApplication.shared.endBackgroundTask(taskID)
+	func startBreakTimer(in timeRange: Range<Int>) {
+		withAnimation(.easeIn) {
+			currentTimer = .breakTime
 		}
+		time = .random(in: timeRange)
+		setNotification(for: TimeInterval(time))
+		endTime = Date.now + Double(time)
+		timer?.invalidate()
+		timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true, block: { _ in
+			time = Int(endTime - Date.now)
+			if time < 0 {
+				self.currentTimer = .breakOver
+				self.timer?.invalidate()
+				self.audioPlayer.play()
+			}
+		})
 	}
 }
 
@@ -210,7 +169,22 @@ extension Date {
 	}
 }
 
+func turnOnNotifications(callBack: @escaping (Bool) -> Void = {_ in }) {
+	UNUserNotificationCenter.current().requestAuthorization(options: [.badge, .alert, .sound]) { success, error in
+		if let error = error { print(error.localizedDescription) }
+		callBack(success)
+	}
+}
 
+func setNotification(for timeInterval: TimeInterval) {
+	let content = UNMutableNotificationContent()
+	content.sound = UNNotificationSound(named: UNNotificationSoundName(rawValue: "Duck-quack.mp3"))
+	content.title = "quack"
+	content.body = ""
+	let trigger = UNTimeIntervalNotificationTrigger(timeInterval: timeInterval, repeats: false)
+	let request = UNNotificationRequest(identifier: "workTime", content: content, trigger: trigger)
+	UNUserNotificationCenter.current().add(request)
+}
 
 // Ok so basically what I want is a timer button called “work” that will be a random interval between 25 and 45 minutes
 // And a timer button called “break” with random time between 6 and 21 minutes

@@ -15,7 +15,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		1E9A8EE728886CC6006C35EA /* work-time-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "work-time-Info.plist"; sourceTree = SOURCE_ROOT; };
 		1EB45650287FE49C00948F24 /* work time.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "work time.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		1EB45653287FE49C00948F24 /* work_timeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = work_timeApp.swift; sourceTree = "<group>"; };
 		1EB45655287FE49C00948F24 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -54,7 +53,6 @@
 		1EB45652287FE49C00948F24 /* work time */ = {
 			isa = PBXGroup;
 			children = (
-				1E9A8EE728886CC6006C35EA /* work-time-Info.plist */,
 				1EB45653287FE49C00948F24 /* work_timeApp.swift */,
 				1EB45655287FE49C00948F24 /* ContentView.swift */,
 				1EB45657287FE49D00948F24 /* Assets.xcassets */,
@@ -271,7 +269,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_ASSET_PATHS = "\"work time/Preview Content\"";
 				DEVELOPMENT_TEAM = A44UN86BN6;
 				ENABLE_PREVIEWS = YES;
@@ -303,7 +301,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_ASSET_PATHS = "\"work time/Preview Content\"";
 				DEVELOPMENT_TEAM = A44UN86BN6;
 				ENABLE_PREVIEWS = YES;
