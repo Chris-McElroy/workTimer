@@ -92,13 +92,10 @@ struct ContentView: View {
 						self.currentTimer = .none
 						endSound()
 					}
-					.onAppear {
-						endableWork = false
-					}
 				Button("Keep Working") {
 					endSound()
-					endableWork = true
 					startWorkTimer(in: 800..<1000)
+					endableWork = true
 				}
 				.buttonStyle(MainStyle(color: purple))
 				.offset(y: 160)
@@ -138,6 +135,7 @@ struct ContentView: View {
 		withAnimation(.easeIn) {
 			currentTimer = .workTime
 		}
+		endableWork = false
 		time = .random(in: timeRange)
 		setNotification(for: TimeInterval(time))
 		timer?.invalidate()
